@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuit-Sense AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+  .status-safe { background: #065f46; border-color: #10b981; }
+  .status-danger { background: #7f1d1d; border-color: #ef4444; }
+  #video { transform: scaleX(-1); }
+</style>
+</head>
+<body class="min-h-screen p-6">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-white">⚡ Circuit-Sense AI</h1>
+      <p class="text-slate-400 text-sm">Autonomous Multimodal Hardware Safety Agent</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Camera + Controls -->
+      <div class="bg-slate-800 rounded-xl p-4">
+        <h2 class="font-semibold mb-3 text-slate-200">📷 Live Camera</h2>
+        <video id="video" class="w-full rounded-lg bg-black" autoplay playsinline></video>
+        <canvas id="canvas" class="hidden"></canvas>
+        <div class="mt-3 flex gap-2">
+          <button id="startBtn" onclick="startCamera()"
+            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium">
+            Start Camera
+          </button>
+          <button id="analyzeBtn" onclick="analyzeOnce()" disabled
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white py-2 px-4 rounded-lg text-sm font-medium">
+            Analyze Now
+          </button>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <button onclick="toggleHeartbeat()"
+            class="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg text-sm font-medium" id="hbBtn">
+            Start Auto-Monitor
+          </button>
+        </div>
+
+        <!-- Upload Datasheet -->
+        <div class="mt-4 border border-slate-600 rounded-lg p-3">
+          <p class="text-sm text-slate-400 mb-2">📎 Upload Datasheet (PDF)</p>
+          <input type="file" id="pdfInput" accept=".pdf" class="text-sm text-slate-300 w-full">
+          <button onclick="uploadDatasheet()"
+            class="mt-2 w-full bg-slate-600 hover:bg-slate-500 text-white py-1.5 px-3 rounded-lg text-sm">
+            Ingest Datasheet
+          </button>
+        </div>
+      </div>
+
+      <!-- Agent Output -->
+      <div class="bg-slate-800 rounded-xl p-4 flex flex-col">
+        <h2 class="font-semibold mb-3 text-slate-200">🤖 Agent Log</h2>
+
+        <!-- Status Badge -->
+        <div id="statusBadge" class="border rounded-lg p-3 mb-4 text-sm font-medium status-safe">
+          ✅ System idle — start camera and analyze to begin.
+        </div>
+
+        <!-- Chat Log -->
+        <div id="chatLog" class="flex-1 space-y-2 overflow-y-auto max-h-80">
+          <div class="text-slate-500 text-sm">Agent messages will appear here...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let stream = null;
+    let heartbeatInterval = null;
+    let heartbeatRunning = false;
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+        document.getElementById('video').srcObject = stream;
+        document.getElementById('analyzeBtn').disabled = false;
+        document.getElementById('startBtn').textContent = '✅ Camera On';
+        log('Camera started.', 'system');
+      } catch (e) {
+        log('Could not access camera: ' + e.message, 'error');
+      }
+    }
+
+    function captureFrame() {
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    }
+
+    async function analyzeOnce() {
+      if (!stream) { log('Start camera first.', 'error'); return; }
+      const b64 = captureFrame();
+      log('Analyzing frame...', 'system');
+      try {
+        const res = await fetch('/analyze', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ image_base64: b64 })
+        });
+        const data = await res.json();
+        updateStatus(data);
+        log(data.agent_message, data.safe ? 'safe' : 'danger');
+      } catch (e) {
+        log('API error: ' + e.message, 'error');
+      }
+    }
+
+    function toggleHeartbeat() {
+      const btn = document.getElementById('hbBtn');
+      if (!heartbeatRunning) {
+        heartbeatInterval = setInterval(analyzeOnce, 5000);
+        heartbeatRunning = true;
+        btn.textContent = '⏹ Stop Auto-Monitor';
+        btn.classList.replace('bg-amber-600', 'bg-red-700');
+      } else {
+        clearInterval(heartbeatInterval);
+        heartbeatRunning = false;
+        btn.textContent = 'Start Auto-Monitor';
+        btn.classList.replace('bg-red-700', 'bg-amber-600');
+      }
+    }
+
+    async function uploadDatasheet() {
+      const file = document.getElementById('pdfInput').files[0];
+      if (!file) { log('Select a PDF first.', 'error'); return; }
+      const fd = new FormData();
+      fd.append('file', file);
+      log('Uploading datasheet...', 'system');
+      const res = await fetch('/upload-datasheet', { method: 'POST', body: fd });
+      const data = await res.json();
+      log(`Datasheet "${data.filename}" ingested into knowledge base.`, 'safe');
+    }
+
+    function updateStatus(data) {
+      const badge = document.getElementById('statusBadge');
+      if (data.safe) {
+        badge.className = 'border rounded-lg p-3 mb-4 text-sm font-medium status-safe';
+        badge.textContent = `✅ SAFE — ${data.chip_detected} — No violations`;
+      } else {
+        badge.className = 'border rounded-lg p-3 mb-4 text-sm font-medium status-danger';
+        badge.textContent = `🔴 VIOLATION — ${data.chip_detected} — ${data.violations.length} issue(s)`;
+      }
+    }
+
+    function log(msg, type) {
+      const el = document.getElementById('chatLog');
+      const colors = { safe: 'text-emerald-400', danger: 'text-red-400', error: 'text-orange-400', system: 'text-slate-400' };
+      const prefix = { safe: '✅', danger: '🔴', error: '⚠️', system: '•' };
+      const div = document.createElement('div');
+      div.className = `text-sm ${colors[type] || 'text-slate-300'} border-b border-slate-700 pb-1`;
+      div.textContent = `${prefix[type] || '•'} ${msg}`;
+      el.prepend(div);
+    }
+  </script>
+</body>
+</html>
