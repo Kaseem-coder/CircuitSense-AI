@@ -122,3 +122,4 @@ Built at RVCE Hackathon — Circuit-Pulse AI team
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE)
+# CircuitSense-AI
