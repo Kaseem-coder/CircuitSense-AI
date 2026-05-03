@@ -9,7 +9,7 @@ Circuit-Sense AI is built as an autonomous agent on the **OpenClaw framework** (
 | Cognitive RAM | ChromaDB RAG — datasheet knowledge base |
 | Channel Adapter | Telegram bot for real-time alerts |
 | Skill Layer | Vision skill (Gemini) + RAG skill (ChromaDB) |
-| LLM Engine | Google Gemini Flash / Anthropic Claude |
+| LLM Engine | Google Gemini Flash  |
 
 > **Autonomous Multimodal Agent for Hardware Debugging & Safety**  
 > Built at RVCE Hackathon | Theme 3: Productivity Platforms
