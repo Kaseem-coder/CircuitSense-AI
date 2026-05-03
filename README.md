@@ -130,7 +130,9 @@ Built at RVCE Hackathon — Circuit-Pulse AI team
 
 ---
 
-## 📄 License
+## Limitations
 
-MIT License — see [LICENSE](LICENSE)
+- The vision module depends on the Gemini API for circuit analysis. Due to free-tier quota restrictions (request and token limits), the API became unavailable during the final demonstration phase. As a result, a full end-to-end demo video could not be recorded.
+
+
 # CircuitSense-AI
