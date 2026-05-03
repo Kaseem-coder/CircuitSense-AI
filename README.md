@@ -1,11 +1,22 @@
-# ⚡ Circuit-Sense AI
+#  Circuit-Sense AI
+
+Circuit-Sense AI is built as an autonomous agent on the **OpenClaw framework** (Theme 3: Productivity Platforms).
+
+| OpenClaw Concept | Circuit-Sense Implementation |
+|-----------------|------------------------------|
+| SOUL.md | Agent personality & safety-first rules |
+| HEARTBEAT.md | 5-second proactive monitoring loop |
+| Cognitive RAM | ChromaDB RAG — datasheet knowledge base |
+| Channel Adapter | Telegram bot for real-time alerts |
+| Skill Layer | Vision skill (Gemini) + RAG skill (ChromaDB) |
+| LLM Engine | Google Gemini Flash / Anthropic Claude |
 
 > **Autonomous Multimodal Agent for Hardware Debugging & Safety**  
 > Built at RVCE Hackathon | Theme 3: Productivity Platforms
 
 ---
 
-## 🔥 The Problem
+##  The Problem
 
 Engineers spend **60% of their time** cross-referencing physical breadboards with 500+ page PDF datasheets. One swapped VCC/GND wire = instant hardware failure. No current AI can **see** the physical circuit *and* **read** technical constraints simultaneously.
 
@@ -13,14 +24,14 @@ Engineers spend **60% of their time** cross-referencing physical breadboards wit
 
 ---
 
-## 🧠 How It Works
+## How It Works
 
 ```
-📷 Webcam → Moondream2 VLM → "ESP32, Pin 12 connected to 5V"
+Webcam → Moondream2 VLM → "ESP32, Pin 12 connected to 5V"
                 ↓
-📄 PDF Datasheet → ChromaDB RAG → "Pin 12 is 3.3V tolerant only!"
+ PDF Datasheet → ChromaDB RAG → "Pin 12 is 3.3V tolerant only!"
                 ↓
-📱 Telegram Alert → "STOP! Voltage violation detected."
+ Telegram Alert → "STOP! Voltage violation detected."
 ```
 
 ### Pipeline
@@ -32,7 +43,7 @@ Engineers spend **60% of their time** cross-referencing physical breadboards wit
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone & Install
 ```bash
@@ -61,7 +72,7 @@ uvicorn src.main:app --host 0.0.0.0 --port 8000
 
 ---
 
-## 📁 Repo Structure
+##  Repo Structure
 
 ```
 CircuitSense-AI/
@@ -83,7 +94,7 @@ CircuitSense-AI/
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -96,7 +107,7 @@ CircuitSense-AI/
 
 ---
 
-## 📊 Impact
+## Impact
 
 - **90% reduction** in hardware burn rate (by catching violations before power-on)
 - **Democratizes embedded engineering** for beginners
@@ -104,7 +115,7 @@ CircuitSense-AI/
 
 ---
 
-## 🔮 Future Scope
+## Future Scope
 
 - Auto-generation of schematics from breadboard photos
 - Integration with oscilloscopes for real-time signal debugging
@@ -113,7 +124,7 @@ CircuitSense-AI/
 
 ---
 
-## 👥 Team
+## Team
 
 Built at RVCE Hackathon — Circuit-Pulse AI team
 

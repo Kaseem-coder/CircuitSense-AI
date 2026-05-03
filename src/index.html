@@ -4,166 +4,716 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Circuit-Sense AI</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  body { background: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
-  .status-safe { background: #065f46; border-color: #10b981; }
-  .status-danger { background: #7f1d1d; border-color: #ef4444; }
-  #video { transform: scaleX(-1); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #000000;
+    --surface: rgba(255,255,255,0.05);
+    --surface-hover: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.1);
+    --border-light: rgba(255,255,255,0.06);
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --text-tertiary: #6e6e73;
+    --accent-blue: #2997ff;
+    --accent-green: #30d158;
+    --accent-red: #ff453a;
+    --accent-amber: #ffd60a;
+    --font: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    --radius: 18px;
+    --radius-sm: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Ambient background glow */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 600px;
+    background: radial-gradient(ellipse, rgba(41,151,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0,0,0,0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid var(--border-light);
+    padding: 0 24px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+
+  .nav-brand .bolt {
+    font-size: 18px;
+    filter: drop-shadow(0 0 6px rgba(41,151,255,0.6));
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    transition: all 0.3s ease;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 6px var(--accent-green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 64px 24px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 6vw, 64px);
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    background: linear-gradient(180deg, #f5f5f7 0%, #86868b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .hero p {
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* MAIN GRID */
+  .main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 680px) {
+    .grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 36px; }
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+
+  /* VIDEO */
+  #video {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    background: #111;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+  }
+
+  .video-placeholder {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: var(--radius-sm);
+    background: #0a0a0a;
+    border: 0.5px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+  }
+
+  .video-placeholder .icon { font-size: 32px; opacity: 0.3; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: 980px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .btn-primary {
+    background: var(--accent-blue);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #0071e3; transform: scale(0.98); }
+  .btn-primary:active { transform: scale(0.95); }
+
+  .btn-success {
+    background: var(--accent-green);
+    color: #000;
+  }
+  .btn-success:hover { filter: brightness(0.9); transform: scale(0.98); }
+  .btn-success:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary);
+    border: 0.5px solid var(--border);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+
+  .btn-amber {
+    background: rgba(255,214,10,0.12);
+    color: var(--accent-amber);
+    border: 0.5px solid rgba(255,214,10,0.2);
+  }
+  .btn-amber:hover { background: rgba(255,214,10,0.18); }
+  .btn-amber.active {
+    background: rgba(255,69,58,0.12);
+    color: var(--accent-red);
+    border-color: rgba(255,69,58,0.2);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-row .btn { flex: 1; min-width: 0; }
+
+  /* STATUS BADGE */
+  .status-banner {
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.4s ease;
+  }
+
+  .status-banner.safe {
+    background: rgba(48,209,88,0.08);
+    border: 0.5px solid rgba(48,209,88,0.2);
+  }
+
+  .status-banner.danger {
+    background: rgba(255,69,58,0.08);
+    border: 0.5px solid rgba(255,69,58,0.2);
+    animation: shake 0.3s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .status-icon { font-size: 20px; flex-shrink: 0; }
+
+  .status-text { flex: 1; }
+  .status-title { font-size: 14px; font-weight: 600; }
+  .status-sub { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+
+  /* LOG */
+  .log-container {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 4px;
+  }
+
+  .log-container::-webkit-scrollbar { width: 3px; }
+  .log-container::-webkit-scrollbar-track { background: transparent; }
+  .log-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .log-item {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 0.5px solid var(--border-light);
+    animation: fadeSlide 0.2s ease;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .log-item.safe { color: var(--accent-green); }
+  .log-item.danger { color: var(--accent-red); }
+  .log-item.error { color: var(--accent-amber); }
+  .log-item.system { color: var(--text-tertiary); }
+  .log-icon { flex-shrink: 0; font-size: 12px; margin-top: 1px; }
+  .log-empty { color: var(--text-tertiary); font-size: 13px; text-align: center; padding: 32px 0; }
+
+  /* UPLOAD SECTION */
+  .upload-zone {
+    border: 0.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-top: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .upload-zone:hover { border-color: rgba(255,255,255,0.2); }
+
+  .upload-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  input[type="file"] {
+    font-size: 12px;
+    color: var(--text-secondary);
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+
+  input[type="file"]::file-selector-button {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary);
+    border: 0.5px solid var(--border);
+    border-radius: 980px;
+    padding: 5px 12px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background 0.15s;
+  }
+
+  input[type="file"]::file-selector-button:hover {
+    background: rgba(255,255,255,0.14);
+  }
+
+  /* MOBILE PHOTO */
+  .mobile-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0 10px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .mobile-divider::before, .mobile-divider::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--border-light);
+  }
+
+  /* CANVAS hidden */
+  #canvas { display: none; }
+
+  /* FOOTER STATS */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--text-primary);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    font-weight: 500;
+  }
 </style>
 </head>
-<body class="min-h-screen p-6">
-  <div class="max-w-4xl mx-auto">
+<body>
 
-    <!-- Header -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-white">⚡ Circuit-Sense AI</h1>
-      <p class="text-slate-400 text-sm">Autonomous Multimodal Hardware Safety Agent</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-      <!-- Camera + Controls -->
-      <div class="bg-slate-800 rounded-xl p-4">
-        <h2 class="font-semibold mb-3 text-slate-200">📷 Live Camera</h2>
-        <video id="video" class="w-full rounded-lg bg-black" autoplay playsinline></video>
-        <canvas id="canvas" class="hidden"></canvas>
-        <div class="mt-3 flex gap-2">
-          <button id="startBtn" onclick="startCamera()"
-            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium">
-            Start Camera
-          </button>
-          <button id="analyzeBtn" onclick="analyzeOnce()" disabled
-            class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white py-2 px-4 rounded-lg text-sm font-medium">
-            Analyze Now
-          </button>
-        </div>
-        <div class="mt-2 flex gap-2">
-          <button onclick="toggleHeartbeat()"
-            class="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg text-sm font-medium" id="hbBtn">
-            Start Auto-Monitor
-          </button>
-        </div>
-
-        <!-- Upload Datasheet -->
-        <div class="mt-4 border border-slate-600 rounded-lg p-3">
-          <p class="text-sm text-slate-400 mb-2">📎 Upload Datasheet (PDF)</p>
-          <input type="file" id="pdfInput" accept=".pdf" class="text-sm text-slate-300 w-full">
-          <button onclick="uploadDatasheet()"
-            class="mt-2 w-full bg-slate-600 hover:bg-slate-500 text-white py-1.5 px-3 rounded-lg text-sm">
-            Ingest Datasheet
-          </button>
-        </div>
-      </div>
-
-      <!-- Agent Output -->
-      <div class="bg-slate-800 rounded-xl p-4 flex flex-col">
-        <h2 class="font-semibold mb-3 text-slate-200">🤖 Agent Log</h2>
-
-        <!-- Status Badge -->
-        <div id="statusBadge" class="border rounded-lg p-3 mb-4 text-sm font-medium status-safe">
-          ✅ System idle — start camera and analyze to begin.
-        </div>
-
-        <!-- Chat Log -->
-        <div id="chatLog" class="flex-1 space-y-2 overflow-y-auto max-h-80">
-          <div class="text-slate-500 text-sm">Agent messages will appear here...</div>
-        </div>
-      </div>
-    </div>
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <span class="bolt">⚡</span>
+    Circuit-Sense AI
   </div>
+  <div class="status-pill" id="navStatus">
+    <div class="status-dot"></div>
+    <span>System Ready</span>
+  </div>
+</nav>
 
-  <script>
-    let stream = null;
-    let heartbeatInterval = null;
-    let heartbeatRunning = false;
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Autonomous Hardware Safety Agent</div>
+  <h1>See the circuit.<br>Stop the damage.</h1>
+  <p>AI-powered real-time analysis of your breadboard. Catches wiring violations before they destroy your hardware.</p>
+</div>
 
-    async function startCamera() {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-        document.getElementById('video').srcObject = stream;
-        document.getElementById('analyzeBtn').disabled = false;
-        document.getElementById('startBtn').textContent = '✅ Camera On';
-        log('Camera started.', 'system');
-      } catch (e) {
-        log('Could not access camera: ' + e.message, 'error');
-      }
-    }
+<!-- MAIN -->
+<div class="main">
+  <div class="grid">
 
-    function captureFrame() {
+    <!-- LEFT: Camera -->
+    <div class="card">
+      <div class="card-label">Live View</div>
+
+      <div id="videoWrap">
+        <div class="video-placeholder" id="placeholder">
+          <span class="icon">📷</span>
+          <span>Camera not started</span>
+        </div>
+        <video id="video" autoplay playsinline style="display:none;"></video>
+      </div>
+      <canvas id="canvas"></canvas>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn" onclick="startCamera()">Start Camera</button>
+        <button class="btn btn-success" id="analyzeBtn" onclick="analyzeOnce()" disabled>Analyze</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-amber" id="hbBtn" onclick="toggleHeartbeat()">⏱ Auto-Monitor</button>
+      </div>
+
+      <!-- Mobile photo -->
+      <div class="mobile-divider">or use photo</div>
+      <input type="file" id="mobileCamera" accept="image/*" capture="environment" onchange="analyzeFromFile(this)">
+
+      <!-- Upload datasheet -->
+      <div class="upload-zone">
+        <div class="upload-label">📎 Datasheet (PDF)</div>
+        <input type="file" id="pdfInput" accept=".pdf">
+        <button class="btn btn-ghost" style="width:100%;" onclick="uploadDatasheet()">Ingest Datasheet</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Agent -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div class="card-label">Agent</div>
+
+      <!-- Status -->
+      <div class="status-banner safe" id="statusBanner">
+        <div class="status-icon">✅</div>
+        <div class="status-text">
+          <div class="status-title">System Idle</div>
+          <div class="status-sub" id="statusSub">Start camera and analyze to begin</div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div class="log-container" id="chatLog">
+        <div class="log-empty">Agent messages will appear here</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="statScans">0</div>
+          <div class="stat-label">Scans</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statViolations" style="color:var(--accent-red)">0</div>
+          <div class="stat-label">Violations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statSheets">0</div>
+          <div class="stat-label">Datasheets</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let stream = null;
+  let heartbeatInterval = null;
+  let heartbeatRunning = false;
+  let totalScans = 0;
+  let totalViolations = 0;
+  let totalSheets = 0;
+
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      });
       const video = document.getElementById('video');
-      const canvas = document.getElementById('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
-      return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+      video.srcObject = stream;
+      video.style.display = 'block';
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('analyzeBtn').disabled = false;
+      document.getElementById('startBtn').textContent = '✓ Camera On';
+      document.getElementById('startBtn').style.background = 'rgba(48,209,88,0.15)';
+      document.getElementById('startBtn').style.color = 'var(--accent-green)';
+      log('Camera started.', 'system');
+      setNavStatus('Camera Active', true);
+    } catch (e) {
+      log('Could not access camera: ' + e.message, 'error');
     }
+  }
 
-    async function analyzeOnce() {
+  function captureFrame() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+  }
+
+  async function analyzeOnce() {
+    if (!stream) { log('Start camera first.', 'error'); return; }
+    const b64 = captureFrame();
+    await sendAnalysis(b64);
+  }
+
+  async function analyzeFromFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const b64 = e.target.result.split(',')[1];
+      await sendAnalysis(b64);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function sendAnalysis(b64) {
+    log('Analyzing...', 'system');
+    setNavStatus('Analyzing...', true);
+    try {
+      const res = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_base64: b64 })
+      });
+      const data = await res.json();
+      totalScans++;
+      document.getElementById('statScans').textContent = totalScans;
+      if (!data.safe) {
+        totalViolations++;
+        document.getElementById('statViolations').textContent = totalViolations;
+      }
+      updateStatus(data);
+      log(data.agent_message, data.safe ? 'safe' : 'danger');
+      setNavStatus(data.safe ? 'All Clear' : 'Violation Detected', true);
+    } catch (e) {
+      log('API error: ' + e.message, 'error');
+      setNavStatus('Error', false);
+    }
+  }
+
+  function toggleHeartbeat() {
+    const btn = document.getElementById('hbBtn');
+    if (!heartbeatRunning) {
       if (!stream) { log('Start camera first.', 'error'); return; }
-      const b64 = captureFrame();
-      log('Analyzing frame...', 'system');
-      try {
-        const res = await fetch('/analyze', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ image_base64: b64 })
-        });
-        const data = await res.json();
-        updateStatus(data);
-        log(data.agent_message, data.safe ? 'safe' : 'danger');
-      } catch (e) {
-        log('API error: ' + e.message, 'error');
-      }
+      heartbeatInterval = setInterval(analyzeOnce, 5000);
+      heartbeatRunning = true;
+      btn.textContent = '⏹ Stop Monitor';
+      btn.classList.add('active');
+      log('Auto-monitor started (every 5s)', 'system');
+    } else {
+      clearInterval(heartbeatInterval);
+      heartbeatRunning = false;
+      btn.textContent = '⏱ Auto-Monitor';
+      btn.classList.remove('active');
+      log('Auto-monitor stopped', 'system');
     }
+  }
 
-    function toggleHeartbeat() {
-      const btn = document.getElementById('hbBtn');
-      if (!heartbeatRunning) {
-        heartbeatInterval = setInterval(analyzeOnce, 5000);
-        heartbeatRunning = true;
-        btn.textContent = '⏹ Stop Auto-Monitor';
-        btn.classList.replace('bg-amber-600', 'bg-red-700');
-      } else {
-        clearInterval(heartbeatInterval);
-        heartbeatRunning = false;
-        btn.textContent = 'Start Auto-Monitor';
-        btn.classList.replace('bg-red-700', 'bg-amber-600');
-      }
-    }
-
-    async function uploadDatasheet() {
-      const file = document.getElementById('pdfInput').files[0];
-      if (!file) { log('Select a PDF first.', 'error'); return; }
-      const fd = new FormData();
-      fd.append('file', file);
-      log('Uploading datasheet...', 'system');
+  async function uploadDatasheet() {
+    const file = document.getElementById('pdfInput').files[0];
+    if (!file) { log('Select a PDF first.', 'error'); return; }
+    const fd = new FormData();
+    fd.append('file', file);
+    log('Ingesting datasheet...', 'system');
+    try {
       const res = await fetch('/upload-datasheet', { method: 'POST', body: fd });
       const data = await res.json();
-      log(`Datasheet "${data.filename}" ingested into knowledge base.`, 'safe');
+      totalSheets++;
+      document.getElementById('statSheets').textContent = totalSheets;
+      log(`"${data.filename}" added to knowledge base.`, 'safe');
+    } catch(e) {
+      log('Upload failed: ' + e.message, 'error');
     }
+  }
 
-    function updateStatus(data) {
-      const badge = document.getElementById('statusBadge');
-      if (data.safe) {
-        badge.className = 'border rounded-lg p-3 mb-4 text-sm font-medium status-safe';
-        badge.textContent = `✅ SAFE — ${data.chip_detected} — No violations`;
-      } else {
-        badge.className = 'border rounded-lg p-3 mb-4 text-sm font-medium status-danger';
-        badge.textContent = `🔴 VIOLATION — ${data.chip_detected} — ${data.violations.length} issue(s)`;
-      }
-    }
+  function updateStatus(data) {
+    const banner = document.getElementById('statusBanner');
+    const icon = banner.querySelector('.status-icon');
+    const title = banner.querySelector('.status-title');
+    const sub = document.getElementById('statusSub');
 
-    function log(msg, type) {
-      const el = document.getElementById('chatLog');
-      const colors = { safe: 'text-emerald-400', danger: 'text-red-400', error: 'text-orange-400', system: 'text-slate-400' };
-      const prefix = { safe: '✅', danger: '🔴', error: '⚠️', system: '•' };
-      const div = document.createElement('div');
-      div.className = `text-sm ${colors[type] || 'text-slate-300'} border-b border-slate-700 pb-1`;
-      div.textContent = `${prefix[type] || '•'} ${msg}`;
-      el.prepend(div);
+    if (data.safe) {
+      banner.className = 'status-banner safe';
+      icon.textContent = '✅';
+      title.textContent = 'All Clear';
+      sub.textContent = `${data.chip_detected} — No violations detected`;
+    } else {
+      banner.className = 'status-banner danger';
+      icon.textContent = '🔴';
+      title.textContent = 'Violation Detected';
+      sub.textContent = `${data.chip_detected} — ${data.violations.length} issue(s) found`;
     }
-  </script>
+  }
+
+  function setNavStatus(text, ok) {
+    const pill = document.getElementById('navStatus');
+    const dot = pill.querySelector('.status-dot');
+    pill.querySelector('span').textContent = text;
+    dot.style.background = ok ? 'var(--accent-green)' : 'var(--accent-red)';
+    dot.style.boxShadow = ok ? '0 0 6px var(--accent-green)' : '0 0 6px var(--accent-red)';
+  }
+
+  function log(msg, type) {
+    const container = document.getElementById('chatLog');
+    const empty = container.querySelector('.log-empty');
+    if (empty) empty.remove();
+
+    const icons = { safe: '✓', danger: '⚠', error: '!', system: '·' };
+    const div = document.createElement('div');
+    div.className = `log-item ${type}`;
+    div.innerHTML = `<span class="log-icon">${icons[type] || '·'}</span><span>${msg}</span>`;
+    container.insertBefore(div, container.firstChild);
+
+    // Keep max 20 logs
+    while (container.children.length > 20) container.removeChild(container.lastChild);
+  }
+</script>
 </body>
 </html>
